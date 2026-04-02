@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block title %}Event Calendar — TicketFlow{% endblock %}
+
+{% block extra_head %}
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css' rel='stylesheet' />
+<style>
+  .calendar-header { margin-bottom: 2rem; }
+
+  .calendar-header h1 {
+    font-family: var(--font-display);
+    font-size: 3rem;
+    letter-spacing: 0.03em;
+  }
+
+  .calendar-header h1 span {
+    -webkit-text-fill-color: transparent;
+    background: linear-gradient(135deg, var(--accent2), var(--accent3));
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+
+  .calendar-header p { color: var(--muted); margin-top: 0.3rem; }
+
+  .calendar-legend {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  #calendar-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+  }
+
+  /* FullCalendar dark theme overrides */
+  .fc { color: var(--text); }
+  .fc-theme-standard td, .fc-theme-standard th, .fc-theme-standard .fc-scrollgrid { border-color: var(--border) !important; }
+  .fc .fc-button { background: rgba(255,255,255,0.06) !important; border-color: var(--border) !important; color: var(--text) !important; border-radius: 8px !important; font-family: var(--font-body) !important; }
+  .fc .fc-button:hover { background: rgba(255,255,255,0.12) !important; }
+  .fc .fc-button-primary:not(:disabled).fc-button-active { background: var(--accent) !important; border-color: var(--accent) !important; }
+  .fc .fc-toolbar-title { font-family: var(--font-display) !important; font-size: 1.8rem !important; letter-spacing: 0.03em; }
+  .fc .fc-col-header-cell { background: rgba(255,255,255,0.03); }
+  .fc .fc-daygrid-day:hover { background: rgba(255,107,53,0.05); }
+  .fc .fc-day-today { background: rgba(255,107,53,0.08) !important; }
+  .fc-event { border-radius: 6px !important; border: none !important; font-size: 0.78rem !important; padding: 2px 6px !important; cursor: pointer; }
+  .fc-event-title { font-weight: 600 !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="calendar-header fade-up">
+  <h1>Event <span>Calendar</span></h1>
+  <p>Browse upcoming events by date</p>
+</div>
+
+<div class="calendar-legend fade-up" style="animation-delay:0.1s">
+  <div class="legend-item">
+    <div class="legend-dot" style="background:var(--accent2)"></div>
+    <span>Available</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-dot" style="background:#ef4444"></div>
+    <span>Sold Out</span>
+  </div>
+</div>
+
+<div id="calendar-wrap" class="fade-up" style="animation-delay:0.2s">
+  <div id="calendar"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+<script>
+  const eventsData = {{ events_json|safe }};
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const cal = new FullCalendar.Calendar(document.getElementById('calendar'), {
+      initialView: 'dayGridMonth',
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,listMonth'
+      },
+      events: eventsData,
+      eventClick: function(info) {
+        window.location.href = info.event.url;
+        info.jsEvent.preventDefault();
+      },
+      eventDidMount: function(info) {
+        const props = info.event.extendedProps;
+        info.el.title = `${info.event.title}\n${props.venue}, ${props.city}\n₹${props.price} · ${props.available} seats left`;
+      },
+    });
+    cal.render();
+  });
+</script>
+{% endblock %}

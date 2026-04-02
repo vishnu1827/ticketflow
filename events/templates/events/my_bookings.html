@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% block title %}My Tickets — TicketFlow{% endblock %}
+
+{% block content %}
+<div class="fade-up">
+  <h1 class="page-title">My <span>Tickets</span></h1>
+  <p class="page-sub">All your bookings in one place</p>
+</div>
+
+{% if bookings %}
+<div class="bookings-list stagger">
+  {% for b in bookings %}
+  <div class="booking-row card fade-up {% if b.status == 'cancelled' %}cancelled{% endif %}">
+    <div class="booking-event-img" style="background-image:url('{{ b.event.image_url|default:'https://picsum.photos/seed/'|add:b.event.pk|stringformat:'s'|add:'/200/200' }}')"></div>
+    <div class="booking-details">
+      <div class="booking-top">
+        <h3><a href="/event/{{ b.event.pk }}/">{{ b.event.title }}</a></h3>
+        {% if b.status == 'confirmed' %}
+          <span class="badge badge-green">✓ Confirmed</span>
+        {% else %}
+          <span class="badge badge-red">✗ Cancelled</span>
+        {% endif %}
+      </div>
+      <div class="booking-info">
+        <span>📅 {{ b.event.date|date:"d M Y · g:i A" }}</span>
+        <span>📍 {{ b.event.venue }}, {{ b.event.city }}</span>
+        <span>🎟 {{ b.quantity }} ticket{{ b.quantity|pluralize }}</span>
+        <span>💰 ₹{{ b.total_price }}</span>
+      </div>
+      <div class="booking-code">
+        Confirmation: <code>{{ b.confirmation_code }}</code>
+      </div>
+    </div>
+    {% if b.status == 'confirmed' %}
+    <div class="booking-actions">
+      <form method="post" action="/booking/{{ b.pk }}/cancel/" onsubmit="return confirm('Cancel this booking?')">
+        {% csrf_token %}
+        <button class="btn btn-danger" type="submit">Cancel</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state fade-up">
+  <div class="empty-icon">🎟</div>
+  <h2>No bookings yet</h2>
+  <p>Explore upcoming events and grab your tickets!</p>
+  <a href="/" class="btn btn-primary">Discover Events</a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  .page-title {
+    font-family: var(--font-display);
+    font-size: 3rem;
+    letter-spacing: 0.03em;
+    margin-bottom: 0.3rem;
+  }
+
+  .page-title span {
+    -webkit-text-fill-color: transparent;
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+
+  .page-sub { color: var(--muted); margin-bottom: 2.5rem; }
+
+  .bookings-list { display: flex; flex-direction: column; gap: 1rem; }
+
+  .booking-row {
+    display: grid;
+    grid-template-columns: 90px 1fr auto;
+    gap: 1.5rem;
+    padding: 1.2rem;
+    align-items: center;
+    transition: all 0.3s;
+  }
+
+  .booking-row.cancelled { opacity: 0.5; }
+
+  @media (max-width: 600px) {
+    .booking-row { grid-template-columns: 1fr; }
+  }
+
+  .booking-event-img {
+    width: 90px;
+    height: 90px;
+    border-radius: 10px;
+    background-size: cover;
+    background-position: center;
+    flex-shrink: 0;
+  }
+
+  .booking-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .booking-top h3 { font-size: 1.05rem; font-weight: 700; }
+  .booking-top h3 a { color: var(--text); text-decoration: none; }
+  .booking-top h3 a:hover { color: var(--accent); }
+
+  .booking-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.2rem;
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+  }
+
+  .booking-code {
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  .booking-code code {
+    background: rgba(255,255,255,0.06);
+    padding: 0.2rem 0.5rem;
+    border-radius: 5px;
+    color: var(--accent2);
+    font-family: monospace;
+    letter-spacing: 0.05em;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 6rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .empty-icon { font-size: 4rem; }
+  .empty-state h2 { font-size: 1.8rem; }
+  .empty-state p { color: var(--muted); }
+</style>
+{% endblock %}

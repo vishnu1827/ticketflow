@@ -1,0 +1,431 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}TicketFlow{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07070d;
+      --surface: #0f0f1a;
+      --card: #13131f;
+      --card2: #1a1a2e;
+      --border: rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.12);
+      --accent: #ff6b35;
+      --accent2: #00d4aa;
+      --accent3: #a855f7;
+      --text: #eeeef5;
+      --muted: #6b6b80;
+      --radius: 18px;
+      --font-display: 'Bebas Neue', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Particle canvas */
+    #particle-canvas {
+      position: fixed; inset: 0;
+      pointer-events: none; z-index: 0;
+      opacity: 0.4;
+    }
+
+    /* Animated mesh */
+    .mesh-bg {
+      position: fixed; inset: 0;
+      pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 90% 60% at 15% 15%, rgba(255,107,53,0.1) 0%, transparent 55%),
+        radial-gradient(ellipse 70% 70% at 85% 85%, rgba(0,212,170,0.08) 0%, transparent 55%),
+        radial-gradient(ellipse 60% 50% at 50% 50%, rgba(168,85,247,0.05) 0%, transparent 65%);
+      animation: meshPulse 15s ease-in-out infinite alternate;
+    }
+    @keyframes meshPulse {
+      0%   { opacity: 1; transform: scale(1) rotate(0deg); }
+      50%  { opacity: 0.7; transform: scale(1.04) rotate(0.5deg); }
+      100% { opacity: 0.9; transform: scale(1.02) rotate(-0.3deg); }
+    }
+
+    /* Grid overlay */
+    .grid-bg {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 100%);
+    }
+
+    /* NAV */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(7,7,13,0.8);
+      backdrop-filter: blur(24px) saturate(180%);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 66px;
+    }
+    nav::after {
+      content: '';
+      position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,107,53,0.4), transparent);
+      animation: navLine 4s ease-in-out infinite;
+    }
+    @keyframes navLine {
+      0%,100% { opacity: 0.3; } 50% { opacity: 1; }
+    }
+
+    .nav-logo {
+      font-family: var(--font-display);
+      font-size: 1.9rem; letter-spacing: 0.05em;
+      color: var(--text); text-decoration: none;
+      display: flex; align-items: center; gap: 0.3rem;
+      position: relative;
+    }
+    .nav-logo .logo-icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 32px; height: 32px;
+      background: var(--accent);
+      border-radius: 8px;
+      font-size: 1rem;
+      animation: logoGlow 3s ease-in-out infinite;
+    }
+    @keyframes logoGlow {
+      0%,100% { box-shadow: 0 0 10px rgba(255,107,53,0.4); }
+      50% { box-shadow: 0 0 24px rgba(255,107,53,0.8), 0 0 48px rgba(255,107,53,0.3); }
+    }
+    .nav-logo span { color: var(--accent); }
+
+    .nav-links { display: flex; align-items: center; gap: 0.4rem; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none;
+      font-size: 0.88rem; font-weight: 500;
+      padding: 0.45rem 1rem; border-radius: 8px;
+      transition: all 0.25s; position: relative; overflow: hidden;
+    }
+    .nav-links a::before {
+      content: ''; position: absolute; bottom: 0; left: 50%; right: 50%; height: 2px;
+      background: var(--accent); transition: all 0.3s; border-radius: 2px;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a:hover::before { left: 15%; right: 15%; }
+
+    /* BUTTONS */
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.55rem 1.3rem; border-radius: 10px;
+      font-family: var(--font-body); font-size: 0.88rem; font-weight: 600;
+      cursor: pointer; transition: all 0.25s;
+      text-decoration: none; border: none; position: relative; overflow: hidden;
+    }
+    .btn::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .btn:hover::after { opacity: 1; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #e8551f);
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(255,107,53,0.25);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(255,107,53,0.45);
+    }
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-ghost {
+      background: rgba(255,255,255,0.05);
+      color: var(--text); border: 1px solid var(--border2);
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
+
+    .btn-success {
+      background: linear-gradient(135deg, #00d4aa, #00a882);
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(0,212,170,0.25);
+    }
+    .btn-success:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,212,170,0.45); }
+
+    .btn-danger {
+      background: rgba(239,68,68,0.12); color: #f87171;
+      border: 1px solid rgba(239,68,68,0.25);
+    }
+    .btn-danger:hover { background: rgba(239,68,68,0.22); }
+
+    /* MAIN */
+    main { position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; padding: 2.5rem 2rem; }
+
+    /* CARDS */
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+      transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+    }
+    .card:hover {
+      border-color: rgba(255,107,53,0.25);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,107,53,0.08);
+    }
+
+    /* MESSAGES */
+    .messages-container {
+      position: fixed; top: 80px; right: 1.5rem;
+      z-index: 200; display: flex; flex-direction: column; gap: 0.6rem;
+    }
+    .message {
+      padding: 0.9rem 1.4rem; border-radius: 12px;
+      font-size: 0.88rem; font-weight: 500;
+      animation: toastIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+      max-width: 360px; backdrop-filter: blur(12px);
+    }
+    .message.success { background: rgba(0,212,170,0.12); border: 1px solid rgba(0,212,170,0.3); color: var(--accent2); }
+    .message.error   { background: rgba(239,68,68,0.12);  border: 1px solid rgba(239,68,68,0.3);  color: #f87171; }
+    .message.info    { background: rgba(168,85,247,0.12); border: 1px solid rgba(168,85,247,0.3); color: #c084fc; }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(40px) scale(0.9); }
+      to   { opacity: 1; transform: translateX(0) scale(1); }
+    }
+
+    /* ANIMATIONS */
+    .fade-up {
+      opacity: 0; transform: translateY(28px);
+      animation: fadeUp 0.6s cubic-bezier(0.4,0,0.2,1) forwards;
+    }
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in { opacity: 0; animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { to { opacity: 1; } }
+
+    .stagger > * { animation-fill-mode: both; }
+    .stagger > *:nth-child(1)  { animation-delay: 0.05s; }
+    .stagger > *:nth-child(2)  { animation-delay: 0.12s; }
+    .stagger > *:nth-child(3)  { animation-delay: 0.19s; }
+    .stagger > *:nth-child(4)  { animation-delay: 0.26s; }
+    .stagger > *:nth-child(5)  { animation-delay: 0.33s; }
+    .stagger > *:nth-child(6)  { animation-delay: 0.40s; }
+    .stagger > *:nth-child(7)  { animation-delay: 0.47s; }
+    .stagger > *:nth-child(8)  { animation-delay: 0.54s; }
+    .stagger > *:nth-child(9)  { animation-delay: 0.61s; }
+    .stagger > *:nth-child(10) { animation-delay: 0.68s; }
+
+    /* BADGE */
+    .badge {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 0.25rem 0.75rem; border-radius: 999px;
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .badge-orange { background: rgba(255,107,53,0.12); color: var(--accent); border: 1px solid rgba(255,107,53,0.25); }
+    .badge-green  { background: rgba(0,212,170,0.1);  color: var(--accent2); border: 1px solid rgba(0,212,170,0.2); }
+    .badge-red    { background: rgba(239,68,68,0.1);  color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+    .badge-purple { background: rgba(168,85,247,0.1); color: #c084fc; border: 1px solid rgba(168,85,247,0.2); }
+
+    /* FORMS */
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1.2rem; }
+    .form-group label { font-size: 0.82rem; color: var(--muted); font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; }
+
+    input, select, textarea {
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border2);
+      color: var(--text); border-radius: 12px;
+      padding: 0.75rem 1rem; font-family: var(--font-body);
+      font-size: 0.95rem; outline: none; width: 100%;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent); background: rgba(255,107,53,0.04);
+      box-shadow: 0 0 0 3px rgba(255,107,53,0.12);
+    }
+
+    /* FOOTER */
+    footer {
+      position: relative; z-index: 1;
+      border-top: 1px solid var(--border); padding: 2rem;
+      text-align: center; color: var(--muted); font-size: 0.83rem;
+    }
+    footer strong { color: var(--accent); }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: rgba(255,107,53,0.3); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,107,53,0.6); }
+
+    /* CURSOR GLOW */
+    .cursor-glow {
+      position: fixed; width: 300px; height: 300px;
+      border-radius: 50%; pointer-events: none; z-index: 0;
+      background: radial-gradient(circle, rgba(255,107,53,0.06) 0%, transparent 70%);
+      transform: translate(-50%, -50%);
+      transition: left 0.1s ease, top 0.1s ease;
+    }
+
+    /* SHIMMER utility */
+    @keyframes shimmer {
+      0%   { background-position: -400px 0; }
+      100% { background-position: 400px 0; }
+    }
+    .shimmer {
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+      background-size: 400px 100%;
+      animation: shimmer 2s infinite;
+    }
+
+    /* PULSE DOT */
+    .pulse-dot {
+      display: inline-block; width: 8px; height: 8px;
+      border-radius: 50%; background: var(--accent2);
+      box-shadow: 0 0 0 0 rgba(0,212,170,0.4);
+      animation: pulseDot 2s ease-in-out infinite;
+    }
+    @keyframes pulseDot {
+      0%  { box-shadow: 0 0 0 0 rgba(0,212,170,0.5); }
+      70% { box-shadow: 0 0 0 8px rgba(0,212,170,0); }
+      100%{ box-shadow: 0 0 0 0 rgba(0,212,170,0); }
+    }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<canvas id="particle-canvas"></canvas>
+<div class="mesh-bg"></div>
+<div class="grid-bg"></div>
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<nav>
+  <a class="nav-logo" href="/">
+    <span class="logo-icon">🎟</span>
+    Ticket<span>Flow</span>
+  </a>
+  <div class="nav-links">
+    <a href="/">Events</a>
+    <a href="/calendar/">Calendar</a>
+    {% if user.is_authenticated %}
+      <a href="/my-bookings/">My Tickets</a>
+      <form method="post" action="/auth/logout/" style="display:inline">
+        {% csrf_token %}
+        <button class="btn btn-ghost" type="submit" style="cursor:pointer;font-size:0.88rem">Sign Out</button>
+      </form>
+    {% else %}
+      <a href="/auth/login/" class="btn btn-ghost">Sign In</a>
+      <a href="/register/" class="btn btn-primary">Join Free</a>
+    {% endif %}
+  </div>
+</nav>
+
+{% if messages %}
+<div class="messages-container">
+  {% for msg in messages %}
+    <div class="message {{ msg.tags }}">{{ msg }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<main>{% block content %}{% endblock %}</main>
+
+<footer>
+  Crafted with ❤️ &nbsp;·&nbsp; <strong>TicketFlow</strong> &nbsp;·&nbsp; Zero hassle. All vibes.
+</footer>
+
+<script>
+// Cursor glow
+const glow = document.getElementById('cursorGlow');
+document.addEventListener('mousemove', e => {
+  glow.style.left = e.clientX + 'px';
+  glow.style.top  = e.clientY + 'px';
+});
+
+// Floating particles
+const canvas = document.getElementById('particle-canvas');
+const ctx = canvas.getContext('2d');
+let W, H, particles = [];
+
+function resize() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+class Particle {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * W;
+    this.y = Math.random() * H + H;
+    this.r = Math.random() * 2 + 0.5;
+    this.speed = Math.random() * 0.4 + 0.2;
+    this.drift = (Math.random() - 0.5) * 0.3;
+    this.opacity = Math.random() * 0.4 + 0.1;
+    this.hue = Math.random() > 0.5 ? '255,107,53' : '0,212,170';
+  }
+  update() {
+    this.y -= this.speed;
+    this.x += this.drift;
+    if (this.y < -10) this.reset();
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${this.hue},${this.opacity})`;
+    ctx.fill();
+  }
+}
+
+for (let i = 0; i < 60; i++) {
+  const p = new Particle();
+  p.y = Math.random() * H; // scatter initially
+  particles.push(p);
+}
+
+function animate() {
+  ctx.clearRect(0, 0, W, H);
+  particles.forEach(p => { p.update(); p.draw(); });
+  requestAnimationFrame(animate);
+}
+animate();
+
+// Auto dismiss messages
+setTimeout(() => {
+  document.querySelectorAll('.message').forEach(m => {
+    m.style.transition = 'opacity 0.5s, transform 0.5s';
+    m.style.opacity = '0';
+    m.style.transform = 'translateX(40px)';
+    setTimeout(() => m.remove(), 500);
+  });
+}, 4500);
+
+// Scroll-triggered fade
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.style.animationPlayState = 'running';
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.fade-up').forEach(el => {
+  el.style.animationPlayState = 'paused';
+  observer.observe(el);
+});
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,377 @@
+{% extends 'base.html' %}
+{% block title %}Checkout — {{ event.title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .checkout-wrap {
+    max-width: 960px; margin: 0 auto;
+    display: grid; grid-template-columns: 1fr 420px;
+    gap: 2.5rem; align-items: start;
+  }
+  @media(max-width:768px){ .checkout-wrap{ grid-template-columns:1fr; } }
+
+  /* Order summary */
+  .order-summary {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 2rem;
+    position: sticky; top: 90px;
+  }
+  .order-summary h2 {
+    font-family: var(--font-display); font-size: 1.6rem;
+    letter-spacing: 0.05em; margin-bottom: 1.5rem;
+    color: var(--accent);
+  }
+  .order-event-img {
+    width: 100%; height: 160px; border-radius: 12px;
+    object-fit: cover; margin-bottom: 1.2rem;
+    background: var(--card2); background-size: cover; background-position: center;
+  }
+  .order-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.4rem; }
+  .order-meta { font-size: 0.82rem; color: var(--muted); line-height: 1.8; }
+  .order-divider { border: none; border-top: 1px solid var(--border); margin: 1.2rem 0; }
+  .order-line { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.5rem; }
+  .order-line .label { color: var(--muted); }
+  .order-total { display: flex; justify-content: space-between; font-weight: 700; font-size: 1.2rem; margin-top: 0.8rem; }
+  .order-total .amount { color: var(--accent); font-size: 1.4rem; }
+  .secure-badge { display: flex; align-items: center; gap: 0.5rem; color: var(--muted); font-size: 0.78rem; margin-top: 1rem; }
+
+  /* Payment form */
+  .payment-form-wrap { }
+  .checkout-header { margin-bottom: 2rem; }
+  .checkout-header h1 {
+    font-family: var(--font-display); font-size: 2.8rem;
+    letter-spacing: 0.03em; line-height: 1;
+  }
+  .checkout-header h1 span {
+    -webkit-text-fill-color: transparent;
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    -webkit-background-clip: text; background-clip: text;
+  }
+  .checkout-header p { color: var(--muted); margin-top: 0.4rem; }
+
+  /* Steps */
+  .steps { display: flex; align-items: center; gap: 0; margin-bottom: 2rem; }
+  .step { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; font-weight: 600; color: var(--muted); }
+  .step.active { color: var(--accent); }
+  .step.done { color: var(--accent2); }
+  .step-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 700; border: 2px solid currentColor;
+    background: transparent; transition: all 0.3s;
+  }
+  .step.active .step-num { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .step.done .step-num { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+  .step-line { flex: 1; height: 2px; background: var(--border2); margin: 0 0.5rem; }
+  .step-line.done { background: var(--accent2); }
+
+  /* Card visual */
+  .card-visual-wrap { perspective: 1000px; margin-bottom: 1.8rem; }
+  .card-visual {
+    width: 100%; max-width: 380px; height: 220px;
+    border-radius: 20px; padding: 1.8rem;
+    background: linear-gradient(135deg, #1a1a3e, #2d1b69, #1a2a4a);
+    position: relative; overflow: hidden;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08);
+    cursor: pointer;
+  }
+  .card-visual:hover { transform: rotateY(-8deg) rotateX(4deg); }
+  .card-visual::before {
+    content: ''; position: absolute; inset: 0; border-radius: 20px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+  }
+  .card-visual::after {
+    content: ''; position: absolute;
+    width: 300px; height: 300px; border-radius: 50%;
+    background: rgba(168,85,247,0.2);
+    top: -80px; right: -80px;
+    animation: cardOrb 6s ease-in-out infinite alternate;
+  }
+  @keyframes cardOrb {
+    from { transform: translate(0,0) scale(1); }
+    to   { transform: translate(20px,20px) scale(1.1); }
+  }
+  .card-chip {
+    width: 44px; height: 34px; border-radius: 6px;
+    background: linear-gradient(135deg, #ffd700, #ffa500);
+    margin-bottom: 1.5rem; position: relative; z-index: 1;
+    box-shadow: 0 2px 8px rgba(255,165,0,0.4);
+  }
+  .card-number-display {
+    font-size: 1.3rem; letter-spacing: 0.2em;
+    font-family: monospace; font-weight: 700;
+    color: rgba(255,255,255,0.9); position: relative; z-index: 1;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    margin-bottom: 1rem;
+  }
+  .card-bottom { display: flex; justify-content: space-between; position: relative; z-index: 1; }
+  .card-label { font-size: 0.6rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.1em; }
+  .card-value { font-size: 0.9rem; color: rgba(255,255,255,0.9); font-weight: 600; margin-top: 0.1rem; }
+  .card-network {
+    position: absolute; top: 1.5rem; right: 1.5rem;
+    z-index: 1; display: flex; gap: -8px;
+  }
+  .card-circle {
+    width: 36px; height: 36px; border-radius: 50%;
+    opacity: 0.8;
+  }
+  .card-circle:first-child { background: #eb001b; margin-right: -12px; }
+  .card-circle:last-child  { background: #f79e1b; }
+
+  /* Form sections */
+  .form-section {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.8rem; margin-bottom: 1.2rem;
+    transition: border-color 0.3s;
+  }
+  .form-section:focus-within { border-color: rgba(255,107,53,0.3); }
+  .section-title {
+    font-size: 0.8rem; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1.2rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .section-title::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  .input-group { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+  /* Card number with spaces */
+  #id_card_number { letter-spacing: 0.15em; font-family: monospace; }
+
+  /* Pay button */
+  .pay-btn {
+    width: 100%; justify-content: center; padding: 1.1rem;
+    font-size: 1.05rem; letter-spacing: 0.05em;
+    position: relative; overflow: hidden;
+    border-radius: 14px;
+  }
+  .pay-btn .shine {
+    position: absolute; top: 0; left: -100%;
+    width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transform: skewX(-20deg);
+    animation: btnShine 3s ease-in-out infinite;
+  }
+  @keyframes btnShine { 0%,100%{ left:-100%; } 50%{ left:120%; } }
+
+  /* Loading overlay */
+  .payment-overlay {
+    display: none; position: fixed; inset: 0; z-index: 500;
+    background: rgba(7,7,13,0.9); backdrop-filter: blur(12px);
+    align-items: center; justify-content: center; flex-direction: column; gap: 1.5rem;
+  }
+  .payment-overlay.active { display: flex; }
+  .spinner {
+    width: 64px; height: 64px; border-radius: 50%;
+    border: 3px solid rgba(255,107,53,0.15);
+    border-top-color: var(--accent);
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .overlay-text { color: var(--text); font-size: 1.1rem; font-weight: 600; }
+  .overlay-sub  { color: var(--muted); font-size: 0.85rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Payment processing overlay -->
+<div class="payment-overlay" id="payOverlay">
+  <div class="spinner"></div>
+  <div class="overlay-text">Processing your payment…</div>
+  <div class="overlay-sub">Please don't close this window</div>
+</div>
+
+<div class="checkout-wrap">
+  <!-- Left: Form -->
+  <div class="payment-form-wrap">
+    <div class="checkout-header fade-up">
+      <h1>Secure <span>Checkout</span></h1>
+      <p>Your payment is encrypted & protected</p>
+    </div>
+
+    <!-- Steps -->
+    <div class="steps fade-up" style="animation-delay:0.1s">
+      <div class="step done">
+        <div class="step-num">✓</div>
+        <span>Select</span>
+      </div>
+      <div class="step-line done"></div>
+      <div class="step active">
+        <div class="step-num">2</div>
+        <span>Payment</span>
+      </div>
+      <div class="step-line"></div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <span>Confirm</span>
+      </div>
+    </div>
+
+    <!-- Live card preview -->
+    <div class="card-visual-wrap fade-up" style="animation-delay:0.15s">
+      <div class="card-visual" id="cardVisual">
+        <div class="card-network">
+          <div class="card-circle"></div>
+          <div class="card-circle"></div>
+        </div>
+        <div class="card-chip"></div>
+        <div class="card-number-display" id="cardNumberDisplay">•••• •••• •••• ••••</div>
+        <div class="card-bottom">
+          <div>
+            <div class="card-label">Card Holder</div>
+            <div class="card-value" id="cardHolderDisplay">YOUR NAME</div>
+          </div>
+          <div>
+            <div class="card-label">Expires</div>
+            <div class="card-value" id="expiryDisplay">MM/YY</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <form method="post" action="/event/{{ event.pk }}/pay/" id="payForm">
+      {% csrf_token %}
+      <input type="hidden" name="quantity" value="{{ quantity }}">
+
+      <!-- Card Details -->
+      <div class="form-section fade-up" style="animation-delay:0.2s">
+        <div class="section-title">💳 Card Details</div>
+        <div class="form-group">
+          <label for="id_card_number">Card Number</label>
+          <input type="text" name="card_number" id="id_card_number"
+                 placeholder="1234 5678 9012 3456" maxlength="19" autocomplete="cc-number">
+        </div>
+        <div class="input-group">
+          <div class="form-group">
+            <label for="id_expiry">Expiry Date</label>
+            <input type="text" name="expiry" id="id_expiry" placeholder="MM/YY" maxlength="5" autocomplete="cc-exp">
+          </div>
+          <div class="form-group">
+            <label for="id_cvv">CVV</label>
+            <input type="password" name="cvv" id="id_cvv" placeholder="•••" maxlength="4" autocomplete="cc-csc">
+          </div>
+        </div>
+      </div>
+
+      <!-- Billing -->
+      <div class="form-section fade-up" style="animation-delay:0.25s">
+        <div class="section-title">👤 Billing Info</div>
+        <div class="form-group">
+          <label for="id_card_holder">Name on Card</label>
+          <input type="text" name="card_holder" id="id_card_holder" placeholder="John Doe" autocomplete="cc-name">
+        </div>
+        <div class="input-group">
+          <div class="form-group">
+            <label for="id_email">Email</label>
+            <input type="email" name="email" id="id_email" placeholder="your@email.com" value="{{ request.user.email }}">
+          </div>
+          <div class="form-group">
+            <label for="id_phone">Phone</label>
+            <input type="tel" name="phone" id="id_phone" placeholder="+91 98765 43210">
+          </div>
+        </div>
+      </div>
+
+      <!-- Test hint -->
+      <div class="fade-up" style="animation-delay:0.28s;background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.2);border-radius:12px;padding:0.9rem 1.2rem;margin-bottom:1.2rem;font-size:0.82rem;color:#c084fc;">
+        <strong>🧪 Test mode:</strong> Use any card number except ending in <code style="background:rgba(168,85,247,0.2);padding:0.1rem 0.4rem;border-radius:4px">0000</code> (that simulates a decline). Expiry: any future date, CVV: any 3 digits.
+      </div>
+
+      <button class="btn btn-primary pay-btn fade-up" type="submit" style="animation-delay:0.3s" id="payBtn">
+        <span class="shine"></span>
+        🔒 Pay ₹{{ total }}
+      </button>
+    </form>
+  </div>
+
+  <!-- Right: Order summary -->
+  <div class="fade-up" style="animation-delay:0.1s">
+    <div class="order-summary">
+      <h2>Order Summary</h2>
+      <div class="order-event-img" style="background-image:url('{{ event.image_url|default:'https://picsum.photos/seed/'|add:event.pk|stringformat:'s'|add:'/600/300' }}')"></div>
+      <div class="order-title">{{ event.title }}</div>
+      <div class="order-meta">
+        📅 {{ event.date|date:"d M Y · g:i A" }}<br>
+        📍 {{ event.venue }}, {{ event.city }}<br>
+        {% if event.category %}{{ event.category.icon }} {{ event.category.name }}{% endif %}
+      </div>
+      <hr class="order-divider">
+      <div class="order-line">
+        <span class="label">Price per ticket</span>
+        <span>₹{{ event.price }}</span>
+      </div>
+      <div class="order-line">
+        <span class="label">Tickets</span>
+        <span>× {{ quantity }}</span>
+      </div>
+      <div class="order-line">
+        <span class="label">Platform fee</span>
+        <span style="color:var(--accent2)">FREE</span>
+      </div>
+      <hr class="order-divider">
+      <div class="order-total">
+        <span>Total</span>
+        <span class="amount">₹{{ total }}</span>
+      </div>
+      <div class="secure-badge">
+        🔒 256-bit SSL encrypted · PCI DSS compliant
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Live card preview
+const numInput    = document.getElementById('id_card_number');
+const holderInput = document.getElementById('id_card_holder');
+const expiryInput = document.getElementById('id_expiry');
+const numDisplay    = document.getElementById('cardNumberDisplay');
+const holderDisplay = document.getElementById('cardHolderDisplay');
+const expiryDisplay = document.getElementById('expiryDisplay');
+const cardVisual    = document.getElementById('cardVisual');
+
+numInput.addEventListener('input', e => {
+  let v = e.target.value.replace(/\D/g,'').substring(0,16);
+  e.target.value = v.replace(/(.{4})/g,'$1 ').trim();
+  const padded = v.padEnd(16,'•');
+  numDisplay.textContent = padded.replace(/(.{4})/g,'$1 ').trim();
+  // Color shift based on first digit
+  const first = v[0];
+  if (first === '4') cardVisual.style.background = 'linear-gradient(135deg,#0f2b4d,#1a4a7a,#0d3a5c)';
+  else if (first === '5') cardVisual.style.background = 'linear-gradient(135deg,#2d1040,#4a1870,#1f0d30)';
+  else cardVisual.style.background = 'linear-gradient(135deg,#1a1a3e,#2d1b69,#1a2a4a)';
+});
+
+holderInput.addEventListener('input', e => {
+  holderDisplay.textContent = e.target.value.toUpperCase() || 'YOUR NAME';
+});
+
+expiryInput.addEventListener('input', e => {
+  let v = e.target.value.replace(/\D/g,'');
+  if (v.length >= 2) v = v.substring(0,2) + '/' + v.substring(2,4);
+  e.target.value = v;
+  expiryDisplay.textContent = v || 'MM/YY';
+});
+
+// Form submit → show overlay
+document.getElementById('payForm').addEventListener('submit', function(e) {
+  const num = numInput.value.replace(/\s/g,'');
+  const holder = holderInput.value.trim();
+  const expiry = expiryInput.value;
+  const cvv = document.getElementById('id_cvv').value;
+
+  if (num.length < 16) { alert('Please enter a valid 16-digit card number.'); e.preventDefault(); return; }
+  if (!holder)          { alert('Please enter the name on your card.'); e.preventDefault(); return; }
+  if (expiry.length < 5){ alert('Please enter a valid expiry date.'); e.preventDefault(); return; }
+  if (cvv.length < 3)   { alert('Please enter a valid CVV.'); e.preventDefault(); return; }
+
+  document.getElementById('payOverlay').classList.add('active');
+  document.getElementById('payBtn').disabled = true;
+});
+</script>
+{% endblock %}

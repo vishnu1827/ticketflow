@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}Create Account — TicketFlow{% endblock %}
+
+{% block content %}
+<div class="auth-wrap fade-up">
+  <div class="auth-card card">
+    <div class="auth-header">
+      <div class="auth-logo">🎟</div>
+      <h1>Join TicketFlow</h1>
+      <p>Create your account to start booking</p>
+    </div>
+
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+      {% for field in form %}
+        <div class="form-group">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}
+            {% for err in field.errors %}
+              <span class="field-error">{{ err }}</span>
+            {% endfor %}
+          {% endif %}
+          {% if field.help_text %}
+            <span class="field-help">{{ field.help_text }}</span>
+          {% endif %}
+        </div>
+      {% endfor %}
+      <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;padding:0.85rem;font-size:1rem;">
+        Create Account 🚀
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      Already have an account? <a href="/auth/login/">Sign in</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  .auth-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 3rem 1rem;
+  }
+
+  .auth-card {
+    width: 100%;
+    max-width: 440px;
+    padding: 2.5rem;
+  }
+
+  .auth-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .auth-logo { font-size: 2.5rem; margin-bottom: 0.8rem; }
+
+  .auth-header h1 {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    letter-spacing: 0.03em;
+    margin-bottom: 0.3rem;
+  }
+
+  .auth-header p { color: var(--muted); font-size: 0.9rem; }
+
+  .field-error {
+    font-size: 0.78rem;
+    color: #f87171;
+    display: block;
+    margin-top: 0.2rem;
+  }
+
+  .field-help {
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: block;
+    margin-top: 0.2rem;
+  }
+
+  .auth-footer {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.88rem;
+    color: var(--muted);
+  }
+
+  .auth-footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .auth-footer a:hover { text-decoration: underline; }
+</style>
+{% endblock %}

@@ -1,0 +1,319 @@
+{% extends 'base.html' %}
+{% block title %}{{ event.title }} — TicketFlow{% endblock %}
+
+{% block content %}
+<div class="detail-layout fade-up">
+  <!-- Left: Info -->
+  <div class="detail-info">
+    <a href="/" class="back-link">← Back to Events</a>
+
+    {% if event.category %}
+      <span class="badge badge-purple" style="margin-bottom:1rem">{{ event.category.icon }} {{ event.category.name }}</span>
+    {% endif %}
+
+    <h1 class="detail-title">{{ event.title }}</h1>
+
+    <div class="detail-meta">
+      <div class="meta-item">
+        <span class="meta-icon">📅</span>
+        <div>
+          <div class="meta-label">Date & Time</div>
+          <div class="meta-val">{{ event.date|date:"l, d F Y" }} · {{ event.date|date:"g:i A" }}</div>
+        </div>
+      </div>
+      <div class="meta-item">
+        <span class="meta-icon">📍</span>
+        <div>
+          <div class="meta-label">Venue</div>
+          <div class="meta-val">{{ event.venue }}, {{ event.city }}</div>
+        </div>
+      </div>
+      <div class="meta-item">
+        <span class="meta-icon">🎟</span>
+        <div>
+          <div class="meta-label">Availability</div>
+          <div class="meta-val">
+            {% if event.is_sold_out %}
+              <span style="color:#f87171">Sold Out</span>
+            {% else %}
+              <span style="color:var(--accent2)">{{ event.available_seats }} of {{ event.total_seats }} seats available</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seat bar -->
+    <div class="detail-seat-bar">
+      <div class="detail-seat-fill" style="width: {{ event.occupancy_pct }}%; transition: width 1.2s ease;"></div>
+    </div>
+    <p style="font-size:0.8rem;color:var(--muted);margin-top:0.4rem">{{ event.occupancy_pct }}% booked</p>
+
+    <div class="detail-desc">
+      <h3>About this event</h3>
+      <p>{{ event.description }}</p>
+    </div>
+  </div>
+
+  <!-- Right: Booking Card -->
+  <div>
+    <div class="booking-card card">
+      <div class="booking-card-header">
+        <div class="booking-price">₹{{ event.price }}</div>
+        <span style="color:var(--muted);font-size:0.85rem">per ticket</span>
+      </div>
+
+      {% if event.image_url %}
+        <img src="{{ event.image_url }}" alt="{{ event.title }}" class="booking-img" onerror="this.style.display='none'">
+      {% else %}
+        <div class="booking-img-placeholder" style="background-image:url('https://picsum.photos/seed/{{ event.pk }}/600/300')"></div>
+      {% endif %}
+
+      <div class="booking-card-body">
+        {% if user.is_authenticated %}
+          {% if user_booked %}
+            <div class="already-booked">
+              <span>✅</span> You've already booked this event
+            </div>
+            <a href="/my-bookings/" class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:0.8rem">View My Tickets</a>
+          {% elif event.is_sold_out %}
+            <div class="sold-out-msg">😔 This event is sold out</div>
+          {% else %}
+            <div class="form-group">
+              <label for="quantity">Number of Tickets</label>
+              <div class="qty-control">
+                <button type="button" onclick="changeQty(-1)" class="qty-btn">−</button>
+                <input type="number" id="quantity" value="1" min="1" max="{{ event.available_seats|default:10 }}" readonly style="text-align:center">
+                <button type="button" onclick="changeQty(1)" class="qty-btn">+</button>
+              </div>
+            </div>
+            <div class="booking-total">
+              <span>Total</span>
+              <span id="totalPrice">₹{{ event.price }}</span>
+            </div>
+            <a id="checkoutBtn" href="/event/{{ event.pk }}/checkout/?qty=1" class="btn btn-primary book-btn">
+              🎟 Proceed to Checkout
+            </a>
+          {% endif %}
+        {% else %}
+          <p style="text-align:center;color:var(--muted);margin-bottom:1rem;font-size:0.9rem">Sign in to book tickets</p>
+          <a href="/auth/login/?next=/event/{{ event.pk }}/" class="btn btn-primary" style="width:100%;justify-content:center">Sign In to Book</a>
+          <a href="/register/" class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:0.5rem">Create Account</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  .detail-layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 3rem;
+    align-items: start;
+  }
+
+  @media (max-width: 768px) {
+    .detail-layout { grid-template-columns: 1fr; }
+  }
+
+  .back-link {
+    display: inline-block;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+    margin-bottom: 1.2rem;
+    transition: color 0.2s;
+  }
+
+  .back-link:hover { color: var(--text); }
+
+  .detail-title {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    line-height: 1.05;
+    letter-spacing: 0.02em;
+    margin-bottom: 1.8rem;
+  }
+
+  .detail-meta { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; }
+
+  .meta-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 0.9rem 1.2rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  .meta-icon { font-size: 1.3rem; }
+  .meta-label { font-size: 0.75rem; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+  .meta-val { font-size: 0.95rem; font-weight: 600; margin-top: 0.1rem; }
+
+  .detail-seat-bar {
+    height: 6px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .detail-seat-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    border-radius: 3px;
+  }
+
+  .detail-desc {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .detail-desc h3 { margin-bottom: 0.8rem; font-size: 1.1rem; }
+  .detail-desc p { color: var(--muted); line-height: 1.7; }
+
+  /* Booking Card */
+  .booking-card { position: sticky; top: 80px; }
+
+  .booking-card-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding: 1.4rem 1.4rem 0;
+  }
+
+  .booking-price {
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+    color: var(--accent);
+  }
+
+  .booking-img, .booking-img-placeholder {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+    margin: 1rem 0;
+    background-size: cover;
+    background-position: center;
+  }
+
+  .booking-card-body { padding: 0 1.4rem 1.4rem; }
+
+  .already-booked {
+    background: rgba(0,212,170,0.1);
+    border: 1px solid rgba(0,212,170,0.2);
+    border-radius: 10px;
+    padding: 0.9rem 1.2rem;
+    color: var(--accent2);
+    font-weight: 500;
+    text-align: center;
+  }
+
+  .sold-out-msg {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 10px;
+    padding: 0.9rem 1.2rem;
+    color: #f87171;
+    font-weight: 500;
+    text-align: center;
+  }
+
+  .qty-control {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .qty-btn {
+    background: rgba(255,255,255,0.04);
+    border: none;
+    color: var(--text);
+    font-size: 1.3rem;
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-family: monospace;
+  }
+
+  .qty-btn:hover { background: rgba(255,107,53,0.15); color: var(--accent); }
+
+  .qty-control input {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    flex: 1;
+    box-shadow: none;
+  }
+
+  .qty-control input:focus { box-shadow: none; border-color: var(--border); }
+
+  .booking-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-top: 1px solid var(--border);
+    margin-top: 1rem;
+    font-weight: 700;
+    font-size: 1.05rem;
+  }
+
+  #totalPrice { color: var(--accent); font-size: 1.3rem; }
+
+  .book-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.9rem;
+    font-size: 1rem;
+    letter-spacing: 0.03em;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .book-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.5s;
+  }
+
+  .book-btn:hover::after { transform: translateX(100%); }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const pricePerTicket = {{ event.price }};
+  const maxSeats = {{ event.available_seats|default:0 }};
+
+  function changeQty(delta) {
+    const inp = document.getElementById('quantity');
+    let v = parseInt(inp.value) + delta;
+    v = Math.max(1, Math.min(Math.min(10, maxSeats), v));
+    inp.value = v;
+    document.getElementById('totalPrice').textContent = '₹' + (pricePerTicket * v).toLocaleString('en-IN');
+    updateCheckoutLink();
+  }
+
+  function updateCheckoutLink() {
+    const qty = parseInt(document.getElementById('quantity').value);
+    const btn = document.getElementById('checkoutBtn');
+    if (btn) btn.href = `/event/{{ event.pk }}/checkout/?qty=${qty}`;
+  }
+  updateCheckoutLink();
+</script>
+{% endblock %}
