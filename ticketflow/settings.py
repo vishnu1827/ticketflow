@@ -72,10 +72,16 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_URL = '/auth/login/'
+LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
 
-# Email (console backend for dev — swap for SMTP in production)
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'TicketFlow <noreply@ticketflow.com>'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'vishnunandanar901@gmail.com'  # Gmail address used for sending emails
+EMAIL_HOST_PASSWORD = 'xzvm xmlp smvd xmdc'
+DEFAULT_FROM_EMAIL = 'TicketFlow <vishnunandanar901@gmail.com>'

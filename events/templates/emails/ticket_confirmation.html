@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Ticket — {{ booking.event.title }}</title>
+</head>
+<body style="margin:0;padding:0;background:#07070d;font-family:'Segoe UI',Arial,sans-serif;">
+
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#07070d;padding:40px 20px;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+
+  <!-- HEADER -->
+  <tr>
+    <td style="text-align:center;padding-bottom:32px;">
+      <div style="display:inline-block;background:#ff6b35;border-radius:12px;padding:10px 18px;font-size:22px;font-weight:900;color:#fff;letter-spacing:2px;">
+        🎟 TICKETFLOW
+      </div>
+    </td>
+  </tr>
+
+  <!-- HERO BANNER -->
+  <tr>
+    <td style="border-radius:20px 20px 0 0;overflow:hidden;position:relative;">
+      <img src="{{ booking.event.image_url }}" width="600" alt="{{ booking.event.title }}"
+           style="width:100%;max-width:600px;height:220px;object-fit:cover;display:block;border-radius:20px 20px 0 0;">
+      <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.1),rgba(0,0,0,0.7));border-radius:20px 20px 0 0;"></div>
+    </td>
+  </tr>
+
+  <!-- MAIN CARD -->
+  <tr>
+    <td style="background:#13131f;border:1px solid rgba(255,255,255,0.07);border-top:none;border-radius:0 0 20px 20px;padding:0;">
+
+      <!-- Success banner -->
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="background:linear-gradient(135deg,rgba(0,212,170,0.15),rgba(0,212,170,0.05));border-bottom:1px solid rgba(0,212,170,0.2);padding:20px 32px;text-align:center;">
+            <div style="font-size:36px;margin-bottom:8px;">✅</div>
+            <div style="font-size:22px;font-weight:800;color:#00d4aa;letter-spacing:1px;">BOOKING CONFIRMED</div>
+            <div style="color:rgba(255,255,255,0.5);font-size:13px;margin-top:4px;">Your tickets are ready. See you there!</div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Greeting -->
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="padding:28px 32px 0;">
+            <div style="color:rgba(255,255,255,0.9);font-size:15px;line-height:1.6;">
+              Hi <strong style="color:#ff6b35;">{{ booking.user.first_name|default:booking.user.username }}</strong>, 👋<br>
+              Your booking for <strong style="color:#fff;">{{ booking.event.title }}</strong> is confirmed.
+              Here's everything you need for the big day.
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- TICKET BLOCK -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;">
+        <tr>
+          <td style="padding:0 32px 32px;">
+
+            <!-- Ticket visual -->
+            <table width="100%" cellpadding="0" cellspacing="0"
+                   style="background:linear-gradient(135deg,#1a1a3e,#2d1b69,#1a2a4a);border-radius:16px;overflow:hidden;">
+
+              <!-- Ticket header -->
+              <tr>
+                <td style="padding:24px 28px 16px;border-bottom:2px dashed rgba(255,255,255,0.12);">
+                  {% if booking.event.category %}
+                  <div style="display:inline-block;background:rgba(168,85,247,0.2);border:1px solid rgba(168,85,247,0.3);
+                              color:#c084fc;font-size:11px;font-weight:700;padding:3px 12px;border-radius:999px;
+                              text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">
+                    {{ booking.event.category.icon }} {{ booking.event.category.name }}
+                  </div>
+                  {% endif %}
+                  <div style="font-size:26px;font-weight:900;color:#fff;letter-spacing:0.5px;line-height:1.1;">
+                    {{ booking.event.title }}
+                  </div>
+                  <div style="color:rgba(255,255,255,0.5);font-size:13px;margin-top:6px;">
+                    {{ booking.event.venue }} · {{ booking.event.city }}
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Ticket details grid -->
+              <tr>
+                <td style="padding:20px 28px;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="50%" style="padding-bottom:16px;vertical-align:top;">
+                        <div style="font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;">📅 Date</div>
+                        <div style="color:#fff;font-size:14px;font-weight:600;margin-top:4px;">{{ booking.event.date|date:"l, d F Y" }}</div>
+                      </td>
+                      <td width="50%" style="padding-bottom:16px;vertical-align:top;">
+                        <div style="font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;">🕐 Time</div>
+                        <div style="color:#fff;font-size:14px;font-weight:600;margin-top:4px;">{{ booking.event.date|date:"g:i A" }}</div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td width="50%" style="padding-bottom:16px;vertical-align:top;">
+                        <div style="font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;">🎟 Tickets</div>
+                        <div style="color:#fff;font-size:14px;font-weight:600;margin-top:4px;">{{ booking.quantity }} × General Admission</div>
+                      </td>
+                      <td width="50%" style="padding-bottom:16px;vertical-align:top;">
+                        <div style="font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;">💰 Amount Paid</div>
+                        <div style="color:#ff6b35;font-size:16px;font-weight:800;margin-top:4px;">₹{{ booking.total_price }}</div>
+                      </td>
+                    </tr>
+                    {% if booking.payment %}
+                    <tr>
+                      <td width="50%" style="vertical-align:top;">
+                        <div style="font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;">💳 Payment</div>
+                        <div style="color:#fff;font-size:14px;font-weight:600;margin-top:4px;">•••• •••• •••• {{ booking.payment.card_last4 }}</div>
+                      </td>
+                      <td width="50%" style="vertical-align:top;">
+                        <div style="font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;">🧾 Transaction</div>
+                        <div style="color:rgba(255,255,255,0.6);font-size:11px;font-family:monospace;margin-top:4px;word-break:break-all;">{{ booking.payment.transaction_id }}</div>
+                      </td>
+                    </tr>
+                    {% endif %}
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Confirmation code section -->
+              <tr>
+                <td style="border-top:2px dashed rgba(255,255,255,0.12);padding:20px 28px;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td>
+                        <div style="font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:8px;">🔑 Confirmation Code</div>
+                        <div style="font-family:monospace;font-size:28px;font-weight:900;letter-spacing:6px;color:#00d4aa;">
+                          {{ booking.confirmation_code }}
+                        </div>
+                        <div style="color:rgba(255,255,255,0.35);font-size:11px;margin-top:6px;">Present this code at the venue entrance</div>
+                      </td>
+                      <td align="right" valign="bottom">
+                        <!-- Fake barcode -->
+                        <div style="display:flex;gap:2px;align-items:flex-end;height:44px;">
+                          <div style="display:flex;gap:2px;align-items:flex-end;height:44px;">
+  <div style="width:3px;height:70%;background:rgba(255,255,255,0.5);border-radius:1px;display:inline-block;"></div>
+  <div style="width:3px;height:40%;background:rgba(255,255,255,0.5);border-radius:1px;display:inline-block;"></div>
+  <div style="width:3px;height:90%;background:rgba(255,255,255,0.5);border-radius:1px;display:inline-block;"></div>
+  <div style="width:3px;height:50%;background:rgba(255,255,255,0.5);border-radius:1px;display:inline-block;"></div>
+  <div style="width:3px;height:100%;background:rgba(255,255,255,0.5);border-radius:1px;display:inline-block;"></div>
+  <div style="width:3px;height:30%;background:rgba(255,255,255,0.5);border-radius:1px;display:inline-block;"></div>
+  <div style="width:3px;height:80%;background:rgba(255,255,255,0.5);border-radius:1px;display:inline-block;"></div>
+  <div style="width:3px;height:60%;background:rgba(255,255,255,0.5);border-radius:1px;display:inline-block;"></div>
+  <div style="width:3px;height:100%;background:rgba(255,255,255,0.5);border-radius:1px;display:inline-block;"></div>
+  <div style="width:3px;height:75%;background:rgba(255,255,255,0.5);border-radius:1px;display:inline-block;"></div>
+</div>
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+            </table>
+
+          </td>
+        </tr>
+      </table>
+
+      <!-- WHAT TO BRING -->
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="padding:0 32px 28px;">
+            <div style="background:rgba(255,107,53,0.08);border:1px solid rgba(255,107,53,0.2);border-radius:12px;padding:18px 20px;">
+              <div style="color:#ff6b35;font-size:13px;font-weight:700;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px;">📋 What to bring</div>
+              <table cellpadding="0" cellspacing="0">
+                <tr><td style="color:rgba(255,255,255,0.7);font-size:13px;padding-bottom:6px;">✓ &nbsp;This email (digital or printed)</td></tr>
+                <tr><td style="color:rgba(255,255,255,0.7);font-size:13px;padding-bottom:6px;">✓ &nbsp;A valid government-issued photo ID</td></tr>
+                <tr><td style="color:rgba(255,255,255,0.7);font-size:13px;padding-bottom:6px;">✓ &nbsp;Your confirmation code: <strong style="color:#00d4aa;font-family:monospace;">{{ booking.confirmation_code }}</strong></td></tr>
+                <tr><td style="color:rgba(255,255,255,0.7);font-size:13px;">✓ &nbsp;Arrive 30 minutes before the event starts</td></tr>
+              </table>
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- CTA BUTTON -->
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="padding:0 32px 32px;text-align:center;">
+            <a href="http://127.0.0.1:8000/my-bookings/"
+               style="display:inline-block;background:linear-gradient(135deg,#ff6b35,#e8551f);color:#fff;
+                      text-decoration:none;font-size:15px;font-weight:700;padding:14px 36px;
+                      border-radius:12px;letter-spacing:0.5px;box-shadow:0 8px 24px rgba(255,107,53,0.3);">
+              View My Tickets →
+            </a>
+          </td>
+        </tr>
+      </table>
+
+    </td>
+  </tr>
+
+  <!-- FOOTER -->
+  <tr>
+    <td style="text-align:center;padding-top:28px;">
+      <div style="color:rgba(255,255,255,0.2);font-size:12px;line-height:1.8;">
+        This is an automated confirmation from <strong style="color:#ff6b35;">TicketFlow</strong>.<br>
+        Questions? Reply to this email.<br>
+        <span style="font-size:10px;">© 2026 TicketFlow · All Rights Reserved</span>
+      </div>
+    </td>
+  </tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>

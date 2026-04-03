@@ -1,10 +1,13 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
+import random
 
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
     icon = models.CharField(max_length=50, default='🎭')
+    color = models.CharField(max_length=20, default='#ff6b35')
 
     def __str__(self):
         return self.name
@@ -25,6 +28,7 @@ class Event(models.Model):
     booked_seats = models.PositiveIntegerField(default=0)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     is_active = models.BooleanField(default=True)
+    is_featured = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -67,7 +71,7 @@ class Booking(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.confirmation_code:
-            import random, string
+            import string
             self.confirmation_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
         super().save(*args, **kwargs)
 
@@ -91,3 +95,32 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"Payment {self.transaction_id} — {self.status}"
+
+
+class OTPVerification(models.Model):
+    PURPOSE_CHOICES = [
+        ('register', 'Registration'),
+        ('login', 'Login'),
+    ]
+    email = models.EmailField()
+    otp = models.CharField(max_length=6)
+    purpose = models.CharField(max_length=20, choices=PURPOSE_CHOICES, default='register')
+    is_verified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self.otp = str(random.randint(100000, 999999))
+            self.expires_at = timezone.now() + timezone.timedelta(minutes=10)
+        super().save(*args, **kwargs)
+
+    @property
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+
+    def __str__(self):
+        return f"OTP for {self.email} ({self.purpose})"
+
+    class Meta:
+        ordering = ['-created_at']

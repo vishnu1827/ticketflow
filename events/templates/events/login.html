@@ -1,18 +1,15 @@
 {% extends 'base.html' %}
-{% block title %}Create Account — TicketFlow{% endblock %}
+{% block title %}Sign In — TicketFlow{% endblock %}
 
 {% block extra_head %}
 <style>
   .auth-wrap { display:flex; justify-content:center; padding:3rem 1rem; }
-  .auth-card { width:100%; max-width:460px; background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:2.5rem; }
+  .auth-card { width:100%; max-width:440px; background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:2.5rem; }
   .auth-logo { text-align:center; margin-bottom:2rem; }
-  .auth-logo .icon { font-size:3rem; display:block; margin-bottom:0.8rem; animation:bounce 2s ease-in-out infinite; }
-  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  .auth-logo .icon { font-size:3rem; display:block; margin-bottom:0.8rem; }
   .auth-logo h1 { font-family:var(--font-display); font-size:2.2rem; letter-spacing:0.04em; }
-  .auth-logo h1 span { color:var(--accent); }
   .auth-logo p { color:var(--muted); font-size:0.9rem; margin-top:0.3rem; }
-  .errors { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:10px; padding:0.9rem 1.1rem; margin-bottom:1.2rem; }
-  .errors li { color:#f87171; font-size:0.83rem; list-style:none; padding:0.2rem 0; }
+  .field-error { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:10px; padding:0.8rem 1rem; color:#f87171; font-size:0.85rem; margin-bottom:1.2rem; }
   .auth-footer { text-align:center; margin-top:1.5rem; font-size:0.88rem; color:var(--muted); }
   .auth-footer a { color:var(--accent); text-decoration:none; font-weight:600; }
 
@@ -22,8 +19,6 @@
   @keyframes shieldPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
   .otp-header h2 { font-family:var(--font-display); font-size:2rem; letter-spacing:0.04em; }
   .otp-email { background:rgba(255,107,53,0.08); border:1px solid rgba(255,107,53,0.2); border-radius:10px; padding:0.7rem 1.1rem; text-align:center; color:var(--accent); font-weight:600; font-size:0.9rem; margin-bottom:1.5rem; }
-
-  /* OTP digit inputs */
   .otp-inputs { display:flex; gap:0.6rem; justify-content:center; margin-bottom:1.5rem; }
   .otp-digit {
     width:52px; height:64px; text-align:center; font-size:1.8rem; font-weight:700;
@@ -33,13 +28,16 @@
   }
   .otp-digit:focus { border-color:var(--accent); background:rgba(255,107,53,0.06); box-shadow:0 0 0 3px rgba(255,107,53,0.12); outline:none; transform:scale(1.05); }
   .otp-digit.filled { border-color:rgba(0,212,170,0.5); background:rgba(0,212,170,0.06); }
-
   .otp-timer { text-align:center; color:var(--muted); font-size:0.85rem; margin-bottom:1rem; }
   .otp-timer strong { color:var(--accent); }
   .otp-error { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:10px; padding:0.75rem 1rem; color:#f87171; font-size:0.85rem; text-align:center; margin-bottom:1rem; }
   .otp-info  { background:rgba(0,212,170,0.08); border:1px solid rgba(0,212,170,0.2);  border-radius:10px; padding:0.75rem 1rem; color:var(--accent2); font-size:0.85rem; text-align:center; margin-bottom:1rem; }
   .resend-row { text-align:center; font-size:0.85rem; color:var(--muted); }
   .resend-row button { background:none; border:none; color:var(--accent); cursor:pointer; font-weight:600; font-size:0.85rem; text-decoration:underline; font-family:var(--font-body); }
+
+  /* Security badges */
+  .security-row { display:flex; gap:0.8rem; justify-content:center; margin-top:1.2rem; flex-wrap:wrap; }
+  .sec-badge { display:flex; align-items:center; gap:0.3rem; font-size:0.72rem; color:var(--muted); }
 </style>
 {% endblock %}
 
@@ -48,11 +46,11 @@
   <div class="auth-card">
 
     {% if step == 'otp' %}
-    <!-- ── OTP Verification ── -->
+    <!-- OTP Step -->
     <div class="otp-header">
-      <span class="shield">🛡️</span>
-      <h2>Verify Your Email</h2>
-      <p style="color:var(--muted);font-size:0.9rem;margin-top:0.4rem">We sent a 6-digit code to</p>
+      <span class="shield">🔐</span>
+      <h2>Enter Your OTP</h2>
+      <p style="color:var(--muted);font-size:0.9rem;margin-top:0.4rem">6-digit code sent to</p>
     </div>
     <div class="otp-email">{{ email }}</div>
 
@@ -63,17 +61,14 @@
       {% csrf_token %}
       <input type="hidden" name="action" value="verify_otp">
       <input type="hidden" name="otp" id="otpHidden">
-
       <div class="otp-inputs">
         {% for i in "123456" %}
           <input type="text" maxlength="1" class="otp-digit" data-idx="{{ forloop.counter0 }}" inputmode="numeric" pattern="[0-9]">
         {% endfor %}
       </div>
-
-      <div class="otp-timer">Code expires in <strong id="countdown">09:59</strong></div>
-
-      <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;padding:0.9rem;font-size:1rem;" id="verifyBtn">
-        ✓ Verify &amp; Create Account
+      <div class="otp-timer">Expires in <strong id="countdown">09:59</strong></div>
+      <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;padding:0.9rem;font-size:1rem;">
+        ✓ Verify &amp; Sign In
       </button>
     </form>
 
@@ -87,45 +82,40 @@
     </div>
 
     {% else %}
-    <!-- ── Registration Form ── -->
+    <!-- Login Form -->
     <div class="auth-logo">
-      <span class="icon">🎟</span>
-      <h1>Join <span>TicketFlow</span></h1>
-      <p>Create your account to start booking</p>
+      <span class="icon">👋</span>
+      <h1>Welcome Back</h1>
+      <p>Sign in with OTP verification</p>
     </div>
 
-    {% if errors %}
-    <ul class="errors">
-      {% for e in errors %}<li>• {{ e }}</li>{% endfor %}
-    </ul>
-    {% endif %}
+    {% if error %}<div class="field-error">❌ {{ error }}</div>{% endif %}
 
     <form method="post">
       {% csrf_token %}
       <input type="hidden" name="action" value="send_otp">
       <div class="form-group">
         <label>Username</label>
-        <input type="text" name="username" value="{{ username|default:'' }}" placeholder="cooluser42" required>
-      </div>
-      <div class="form-group">
-        <label>Email Address</label>
-        <input type="email" name="email" value="{{ email|default:'' }}" placeholder="you@example.com" required>
+        <input type="text" name="username" value="{{ username|default:'' }}" placeholder="Your username" required autofocus>
       </div>
       <div class="form-group">
         <label>Password</label>
-        <input type="password" name="password1" placeholder="Min 8 characters" required>
+        <input type="password" name="password" placeholder="Your password" required>
       </div>
-      <div class="form-group">
-        <label>Confirm Password</label>
-        <input type="password" name="password2" placeholder="Repeat password" required>
-      </div>
+      {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
       <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;padding:0.9rem;font-size:1rem;">
         Send OTP →
       </button>
     </form>
 
+    <div class="security-row">
+      <div class="sec-badge">🔒 OTP secured</div>
+      <div class="sec-badge">🛡️ 2-factor auth</div>
+      <div class="sec-badge">⚡ 10 min validity</div>
+    </div>
+
     <div class="auth-footer">
-      Already have an account? <a href="/login/">Sign in</a>
+      Don't have an account? <a href="/register/">Create one free</a>
     </div>
     {% endif %}
   </div>
@@ -137,9 +127,7 @@
 <script>
 const digits = document.querySelectorAll('.otp-digit');
 const hidden = document.getElementById('otpHidden');
-
 digits[0].focus();
-
 digits.forEach((d, i) => {
   d.addEventListener('input', e => {
     const v = e.target.value.replace(/\D/g,'');
@@ -156,19 +144,15 @@ digits.forEach((d, i) => {
     const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g,'').substring(0,6);
     paste.split('').forEach((ch,j) => { if(digits[j]){ digits[j].value=ch; digits[j].classList.add('filled'); } });
     hidden.value = paste;
-    if(digits[paste.length-1]) digits[Math.min(paste.length,5)].focus();
+    digits[Math.min(paste.length, 5)].focus();
   });
 });
-
-// Countdown timer
 let secs = 599;
 const el = document.getElementById('countdown');
 const timer = setInterval(() => {
-  if (secs <= 0) { clearInterval(timer); el.textContent = '00:00'; el.style.color='#f87171'; return; }
+  if (secs <= 0) { clearInterval(timer); el.textContent='00:00'; el.style.color='#f87171'; return; }
   secs--;
-  const m = String(Math.floor(secs/60)).padStart(2,'0');
-  const s = String(secs%60).padStart(2,'0');
-  el.textContent = `${m}:${s}`;
+  el.textContent = `${String(Math.floor(secs/60)).padStart(2,'0')}:${String(secs%60).padStart(2,'0')}`;
 }, 1000);
 </script>
 {% endif %}
